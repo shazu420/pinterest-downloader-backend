@@ -1,28 +1,40 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 import subprocess, uuid, os
 
 app = FastAPI()
 TMP = "/tmp"
 
+# ✅ Request body schema
+class FetchRequest(BaseModel):
+    url: str
+
 @app.post("/fetch")
-async def fetch(req: Request):
-    data = await req.json()
-    url = data.get("url", "")
+async def fetch(data: FetchRequest):
+    url = data.url
 
     if "pinterest" not in url and "pin.it" not in url:
-        return {"error": "Invalid URL"}
+        return {"error": "Invalid Pinterest URL"}
 
     filename = f"{uuid.uuid4()}.mp4"
     path = os.path.join(TMP, filename)
 
     try:
         subprocess.run(
-            ["yt-dlp", "-f", "mp4", "-o", path, url],
-            timeout=40
+            [
+                "yt-dlp",
+                "-f", "bv*+ba/best",
+                "--merge-output-format", "mp4",
+                "--user-agent", "Mozilla/5.0",
+                "-o", path,
+                url
+            ],
+            timeout=60,
+            check=True
         )
-    except:
-        return {"error": "Download failed"}
+    except Exception as e:
+        return {"error": str(e)}
 
     return {"file": filename}
 
