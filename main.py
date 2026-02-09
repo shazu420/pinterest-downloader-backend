@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Body
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import subprocess, uuid, os
@@ -6,12 +6,11 @@ import subprocess, uuid, os
 app = FastAPI()
 TMP = "/tmp"
 
-# ✅ Request body schema
 class FetchRequest(BaseModel):
     url: str
 
 @app.post("/fetch")
-async def fetch(data: FetchRequest):
+async def fetch(data: FetchRequest = Body(...)):
     url = data.url
 
     if "pinterest" not in url and "pin.it" not in url:
